@@ -44,8 +44,8 @@ Existing tools (Microsoft Planner and similar) were either too generic or didn't
 
 | Role | Typical access |
 |---|---|
-| `trabalhador` (worker) | Submits plans, tasks and messages; sees calendar and shift data for their own crew |
-| `planejador` / `chefe` / `gestor` (planner / lead / manager) | Team-wide overview, reviews plans for their crew, can back up the database |
+| `worker` | Submits plans, tasks and messages; sees calendar and shift data for their own crew |
+| `planner` / `lead` / `manager` | Team-wide overview, reviews plans for their crew, can back up the database |
 | Cross-crew reviewer | Reviews plans from every crew |
 | Approver | Confirms planned vacation requests |
 
@@ -67,7 +67,7 @@ Existing tools (Microsoft Planner and similar) were either too generic or didn't
 
 ```bash
 git clone <this-repo-url>
-cd buildtrack
+cd buildtrack-planner
 python app.py
 ```
 
