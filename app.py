@@ -418,22 +418,22 @@ def criar_banco():
     # --------------------------------------------------------
 
     usuarios = [
-        ("Alex", "alex", "alex123", "trabalhador"),
-        ("Sam", "sam", "sam123", "trabalhador"),
-        ("Noah", "noah", "noah123", "trabalhador"),
-        ("Liam", "liam", "liam123", "trabalhador"),
-        ("Mia", "mia", "mia123", "trabalhador"),
-        ("Chris", "chris", "chris123", "trabalhador"),
-        ("Owen", "owen", "owen123", "trabalhador"),
-        ("Zoe", "zoe", "zoe123", "trabalhador"),
+        ("Alex", "alex", "alex123", "worker"),
+        ("Sam", "sam", "sam123", "worker"),
+        ("Noah", "noah", "noah123", "worker"),
+        ("Liam", "liam", "liam123", "worker"),
+        ("Mia", "mia", "mia123", "worker"),
+        ("Chris", "chris", "chris123", "worker"),
+        ("Owen", "owen", "owen123", "worker"),
+        ("Zoe", "zoe", "zoe123", "worker"),
 
-        ("Dana", "dana", "dana123", "planejador"),
-        ("Kai", "kai", "kai123", "planejador"),
-        ("Theo", "theo", "theo123", "planejador"),
+        ("Dana", "dana", "dana123", "planner"),
+        ("Kai", "kai", "kai123", "planner"),
+        ("Theo", "theo", "theo123", "planner"),
 
-        ("Priya", "priya", "priya123", "chefe"),
+        ("Priya", "priya", "priya123", "lead"),
 
-        ("Jordan", "jordan", "jordan123", "gestor"),
+        ("Jordan", "jordan", "jordan123", "manager"),
     ]
 
     # Primeiro, tenta preencher login para bases antigas
@@ -638,7 +638,7 @@ def alterar_senha(usuario_id, senha_atual, senha_nova):
     ).fetchone()
     if not usuario:
         conexao.close()
-        raise ValueError("Usuário não encontrado.")
+        raise ValueError("User not found.")
 
     senha_armazenada = usuario["senha"] or ""
     if "$" in senha_armazenada:
@@ -683,16 +683,16 @@ def buscar_usuarios_por_perfil(perfis):
 
 
 def buscar_trabalhadores():
-    return buscar_usuarios_por_perfil(["trabalhador"])
+    return buscar_usuarios_por_perfil(["worker"])
 
 
 def buscar_planejadores():
-    return buscar_usuarios_por_perfil(["planejador"])
+    return buscar_usuarios_por_perfil(["planner"])
 
 
 def buscar_usuarios_acompanhamento():
     return buscar_usuarios_por_perfil(
-        ["trabalhador", "planejador"]
+        ["worker", "planner"]
     )
 
 
@@ -791,7 +791,7 @@ def logins_eventos_visiveis(login, perfil):
     coordenar cobertura, além de seus próprios registros.
     """
     login = (login or "").strip().lower()
-    if perfil in ("planejador", "chefe", "gestor"):
+    if perfil in ("planner", "lead", "manager"):
         return None
     grupo = grupo_presenca(login)
     return grupo if grupo else {login}
@@ -863,7 +863,7 @@ def pode_registrar_feierabend(usuario_id, data_str, hora):
     ).fetchone()
     if not usuario:
         conexao.close()
-        return False, "Usuário não encontrado."
+        return False, "User not found."
 
     grupo = grupo_presenca(usuario["login"])
     if not grupo:
@@ -1536,7 +1536,7 @@ def criar_solicitacao_conferencia(
     autor = conexao.execute("SELECT login FROM usuarios WHERE id = ?", (autor_id,)).fetchone()
     if not autor:
         conexao.close()
-        raise ValueError("Usuário não encontrado.")
+        raise ValueError("User not found.")
     if autor["login"].lower() == "dana":
         conexao.close()
         raise PermissionError("Bene é conferidor geral e não envia planos para conferência.")
@@ -2228,7 +2228,7 @@ class MeuOrganizador:
         ).pack(anchor="center", pady=(50, 4))
         tk.Label(
             marca,
-            text="Diário de Planung & Projetos",
+            text="Team Planning & Projects",
             bg=SIDEBAR,
             fg="#94A3B8",
             font=("Segoe UI", 10)
@@ -2241,7 +2241,7 @@ class MeuOrganizador:
 
         tk.Label(
             marca,
-            text="Planeje • Registre • Acompanhe",
+            text="Plan • Track • Deliver",
             bg=SIDEBAR,
             fg="#64748B",
             font=("Segoe UI", 9)
@@ -2253,17 +2253,17 @@ class MeuOrganizador:
         card = tk.Frame(card_externo, bg=WHITE)
         card.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.86)
 
-        tk.Label(card, text="Bem-vindo", bg=WHITE, fg=TEXT,
+        tk.Label(card, text="Welcome", bg=WHITE, fg=TEXT,
                  font=("Segoe UI", 26, "bold")).pack(anchor="w")
-        tk.Label(card, text="Entre para acessar seu diário de trabalho.",
+        tk.Label(card, text="Sign in to access your workspace.",
                  bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 10)).pack(anchor="w", pady=(5, 28))
 
-        tk.Label(card, text="Usuário", bg=WHITE, fg=TEXT,
+        tk.Label(card, text="Username", bg=WHITE, fg=TEXT,
                  font=("Segoe UI Semibold", 10)).pack(anchor="w")
         self.login_entry = tk.Entry(card, font=("Segoe UI", 12), relief="solid", bd=1)
         self.login_entry.pack(fill="x", ipady=9, pady=(5, 16))
 
-        tk.Label(card, text="Senha", bg=WHITE, fg=TEXT,
+        tk.Label(card, text="Password", bg=WHITE, fg=TEXT,
                  font=("Segoe UI Semibold", 10)).pack(anchor="w")
         self.senha_entry = tk.Entry(card, font=("Segoe UI", 12), relief="solid", bd=1, show="●")
         self.senha_entry.pack(fill="x", ipady=9, pady=(5, 22))
@@ -2304,7 +2304,7 @@ class MeuOrganizador:
 
             messagebox.showerror(
                 "Login",
-                "Usuário ou senha incorretos."
+                "Incorrect username or password."
             )
 
             self.senha_entry.delete(
@@ -2436,7 +2436,7 @@ class MeuOrganizador:
                     self.sidebar_topo.pack_configure(padx=12, pady=(20, 22))
                 else:
                     self.sidebar_titulo.configure(text="Planejamento de\nConstrução", font=("Segoe UI", 13, "bold"), justify="left")
-                    self.sidebar_subtitulo.configure(text="Diário de Planung & Projetos", font=("Segoe UI", 8))
+                    self.sidebar_subtitulo.configure(text="Team Planning & Projects", font=("Segoe UI", 8))
                     if not self.sidebar_logos_frame.winfo_ismapped():
                         self.sidebar_logos_frame.pack(fill="x", pady=(7, 0))
                     self.sidebar_topo.pack_configure(padx=20, pady=(25, 30))
@@ -2477,12 +2477,12 @@ class MeuOrganizador:
                     self.sidebar_usuario_frame.pack_configure(padx=8)
                 else:
                     self.sidebar_usuario_nome.configure(text=self.usuario["nome"], anchor="w")
-                    perfil_nomes = {"trabalhador": "TRABALHADOR", "planejador": "PLANEJAMENTO",
-                                    "chefe": "CHEFA", "gestor": "GESTOR"}
+                    perfil_nomes = {"worker": "WORKER", "planner": "PLANNER",
+                                    "lead": "LEAD", "manager": "MANAGER"}
                     self.sidebar_usuario_perfil.configure(
                         text=perfil_nomes.get(self.usuario["perfil"], self.usuario["perfil"].upper())
                     )
-                    self.sidebar_sair.configure(text="Sair", anchor="w")
+                    self.sidebar_sair.configure(text="Log out", anchor="w")
                     self.sidebar_usuario_frame.pack_configure(padx=12)
 
         self.sidebar.configure(width=sidebar_w)
@@ -2530,7 +2530,7 @@ class MeuOrganizador:
         self.sidebar_titulo.pack(anchor="w")
 
         self.sidebar_subtitulo = tk.Label(
-            marca, text="Diário de Planung & Projetos", bg=SIDEBAR, fg="#94A3B8",
+            marca, text="Team Planning & Projects", bg=SIDEBAR, fg="#94A3B8",
             font=("Segoe UI", 8)
         )
         self.sidebar_subtitulo.pack(anchor="w", pady=(3, 0))
@@ -2543,16 +2543,16 @@ class MeuOrganizador:
         self.botoes_menu = {}
         self.menu_meta = {}
 
-        self.adicionar_botao_menu("inicio", "⌂", "Início", self.mostrar_inicio)
-        self.adicionar_botao_menu("tarefas", "✓", "Tarefas", self.mostrar_tarefas)
-        self.adicionar_botao_menu("projetos", "▤", "Projetos", self.mostrar_projetos)
-        self.adicionar_botao_menu("conferencias", "✓", "Planos a conferir", self.mostrar_conferencias)
+        self.adicionar_botao_menu("inicio", "⌂", "Home", self.mostrar_inicio)
+        self.adicionar_botao_menu("tarefas", "✓", "Tasks", self.mostrar_tarefas)
+        self.adicionar_botao_menu("projetos", "▤", "Projects", self.mostrar_projetos)
+        self.adicionar_botao_menu("conferencias", "✓", "Plans to review", self.mostrar_conferencias)
 
-        if self.usuario["perfil"] in ("trabalhador", "planejador", "chefe"):
-            self.adicionar_botao_menu("informacoes", "ℹ", "Informações", self.mostrar_informacoes)
+        if self.usuario["perfil"] in ("worker", "planner", "lead"):
+            self.adicionar_botao_menu("informacoes", "ℹ", "Messages", self.mostrar_informacoes)
 
-        self.adicionar_botao_menu("calendario", "▣", "Calendário", self.mostrar_calendario)
-        self.adicionar_botao_menu("antigas", "◷", "Antigas", self.mostrar_antigas)
+        self.adicionar_botao_menu("calendario", "▣", "Calendar", self.mostrar_calendario)
+        self.adicionar_botao_menu("antigas", "◷", "Archive", self.mostrar_antigas)
 
         self.sidebar_spacer = tk.Frame(self.sidebar, bg=SIDEBAR)
         self.sidebar_spacer.pack(fill="both", expand=True)
@@ -2561,10 +2561,10 @@ class MeuOrganizador:
         self.sidebar_usuario_frame.pack(fill="x", padx=12, pady=12)
 
         perfil_nomes = {
-            "trabalhador": "TRABALHADOR",
-            "planejador": "PLANEJAMENTO",
-            "chefe": "CHEFA",
-            "gestor": "GESTOR"
+            "worker": "WORKER",
+            "planner": "PLANNER",
+            "lead": "LEAD",
+            "manager": "MANAGER"
         }
 
         self.sidebar_usuario_nome = tk.Label(
@@ -2581,22 +2581,22 @@ class MeuOrganizador:
         self.sidebar_usuario_perfil.pack(anchor="w", padx=12)
 
         self.sidebar_trocar_senha = tk.Button(
-            self.sidebar_usuario_frame, text="Trocar senha", bg="#172033", fg="#CBD5E1",
+            self.sidebar_usuario_frame, text="Change password", bg="#172033", fg="#CBD5E1",
             activebackground="#243047", activeforeground=WHITE, relief="flat", bd=0,
             cursor="hand2", anchor="w", command=self.abrir_troca_senha
         )
         self.sidebar_trocar_senha.pack(fill="x", padx=7, pady=(8, 0), ipady=5)
 
-        if self.usuario["perfil"] in ("planejador", "chefe", "gestor"):
+        if self.usuario["perfil"] in ("planner", "lead", "manager"):
             self.sidebar_backup = tk.Button(
-                self.sidebar_usuario_frame, text="Backup do banco", bg="#172033", fg="#CBD5E1",
+                self.sidebar_usuario_frame, text="Backup database", bg="#172033", fg="#CBD5E1",
                 activebackground="#243047", activeforeground=WHITE, relief="flat", bd=0,
                 cursor="hand2", anchor="w", command=self.fazer_backup_banco
             )
             self.sidebar_backup.pack(fill="x", padx=7, pady=(0, 0), ipady=5)
 
         self.sidebar_sair = tk.Button(
-            self.sidebar_usuario_frame, text="Sair", bg="#172033", fg="#CBD5E1",
+            self.sidebar_usuario_frame, text="Log out", bg="#172033", fg="#CBD5E1",
             activebackground="#243047", activeforeground=WHITE, relief="flat", bd=0,
             cursor="hand2", anchor="w", command=self.logout
         )
@@ -2715,9 +2715,9 @@ class MeuOrganizador:
         perfil = self.usuario["perfil"]
 
         if perfil in (
-            "chefe",
-            "planejador",
-            "gestor"
+            "lead",
+            "planner",
+            "manager"
         ):
 
             return self.trabalhador_selecionado
@@ -2731,9 +2731,9 @@ class MeuOrganizador:
     def criar_seletor_trabalhador(self, parent):
 
         if self.usuario["perfil"] not in (
-            "chefe",
-            "planejador",
-            "gestor"
+            "lead",
+            "planner",
+            "manager"
         ):
             return
 
@@ -2945,7 +2945,7 @@ class MeuOrganizador:
             ORANGE
         )
 
-        if self.usuario["perfil"] == "trabalhador":
+        if self.usuario["perfil"] == "worker":
             self.criar_card(
                 cards,
                 "INFORMAÇÕES NOVAS",
@@ -3002,7 +3002,7 @@ class MeuOrganizador:
         )
 
         pode_editar_hoje = (
-            self.usuario["perfil"] == "trabalhador"
+            self.usuario["perfil"] == "worker"
             and alvo is not None
             and int(alvo["id"]) == int(self.usuario["id"])
         )
@@ -3363,7 +3363,7 @@ class MeuOrganizador:
 
     def editar_plano(self):
         alvo = self.alvo_atual()
-        if not alvo or self.usuario["perfil"] != "trabalhador" or int(alvo["id"]) != int(self.usuario["id"]):
+        if not alvo or self.usuario["perfil"] != "worker" or int(alvo["id"]) != int(self.usuario["id"]):
             messagebox.showwarning("Permissão", "Somente você pode editar seu próprio Plano do Dia.")
             return
         plano = buscar_plano(alvo["id"], self.data_atual)
@@ -3371,7 +3371,7 @@ class MeuOrganizador:
 
     def editar_plano_amanha(self):
         alvo = self.alvo_atual()
-        if not alvo or self.usuario["perfil"] != "trabalhador" or int(alvo["id"]) != int(self.usuario["id"]):
+        if not alvo or self.usuario["perfil"] != "worker" or int(alvo["id"]) != int(self.usuario["id"]):
             messagebox.showwarning("Permissão", "Somente você pode editar seu próprio planejamento.")
             return
         amanha = (date.fromisoformat(self.data_atual) + timedelta(days=1)).strftime("%Y-%m-%d")
@@ -3396,7 +3396,7 @@ class MeuOrganizador:
 
         def salvar():
             alvo = self.alvo_atual()
-            if not alvo or self.usuario["perfil"] != "trabalhador" or int(alvo["id"]) != int(self.usuario["id"]):
+            if not alvo or self.usuario["perfil"] != "worker" or int(alvo["id"]) != int(self.usuario["id"]):
                 messagebox.showerror("Permissão", "Somente você pode editar seu próprio planejamento.")
                 return
             data_salvar = data_str or self.data_atual
@@ -3416,7 +3416,7 @@ class MeuOrganizador:
 
     def salvar_plano_tela(self):
         alvo = self.alvo_atual()
-        if not alvo or self.usuario["perfil"] != "trabalhador" or int(alvo["id"]) != int(self.usuario["id"]):
+        if not alvo or self.usuario["perfil"] != "worker" or int(alvo["id"]) != int(self.usuario["id"]):
             messagebox.showerror("Permissão", "Somente você pode editar seu próprio Plano do Dia.")
             return
         texto = self.plano_text.get("1.0", "end-1c").strip()
@@ -3432,7 +3432,7 @@ class MeuOrganizador:
 
     def salvar_plano_amanha_tela(self):
         alvo = self.alvo_atual()
-        if not alvo or self.usuario["perfil"] != "trabalhador" or int(alvo["id"]) != int(self.usuario["id"]):
+        if not alvo or self.usuario["perfil"] != "worker" or int(alvo["id"]) != int(self.usuario["id"]):
             messagebox.showerror("Permissão", "Somente você pode editar seu próprio planejamento.")
             return
         texto = self.plano_amanha_text.get("1.0", "end-1c").strip()
@@ -4358,7 +4358,7 @@ class MeuOrganizador:
         self.limpar_conteudo()
 
         perfil = self.usuario["perfil"]
-        visao_equipe = perfil in ("planejador", "chefe", "gestor")
+        visao_equipe = perfil in ("planner", "lead", "manager")
         login_atual = self.usuario["login"].lower()
 
         self.titulo_pagina(
@@ -4402,7 +4402,7 @@ class MeuOrganizador:
 
         # Trabalhadores podem registrar férias; Feierabend somente nos blocos de presença.
         # Marion também está no bloco 2 e pode registrar o próprio Feierabend.
-        pode_criar = perfil == "trabalhador" or login_atual in PRESENCA_SETOR_LOGINS
+        pode_criar = perfil == "worker" or login_atual in PRESENCA_SETOR_LOGINS
         if pode_criar:
             tk.Button(
                 area, text="+ Adicionar ao calendário",
@@ -4719,7 +4719,7 @@ class MeuOrganizador:
         perfil = self.usuario["perfil"]
         login = self.usuario["login"].lower()
 
-        if perfil != "trabalhador" and login not in PRESENCA_SETOR_LOGINS:
+        if perfil != "worker" and login not in PRESENCA_SETOR_LOGINS:
             return
 
         janela = tk.Toplevel(self.root)
@@ -4900,7 +4900,7 @@ class MeuOrganizador:
         status_combo.set("Ativo")
         status_combo.pack(side="left", padx=(8, 14))
 
-        pode_gerir = self.usuario["perfil"] in ("planejador", "chefe")
+        pode_gerir = self.usuario["perfil"] in ("planner", "lead")
 
         if pode_gerir:
             tk.Button(
@@ -5028,7 +5028,7 @@ class MeuOrganizador:
 
 
     def abrir_editor_projeto(self, projeto=None):
-        if self.usuario["perfil"] not in ("planejador", "chefe"):
+        if self.usuario["perfil"] not in ("planner", "lead"):
             messagebox.showwarning(
                 "Projetos",
                 "Seu perfil pode consultar projetos, mas não alterar o cadastro."
@@ -5575,8 +5575,8 @@ class MeuOrganizador:
         perfil = self.usuario["perfil"]
 
         if perfil in (
-            "planejador",
-            "chefe"
+            "planner",
+            "lead"
         ):
 
             self.mostrar_informacoes_envio()
@@ -6452,7 +6452,7 @@ class MeuOrganizador:
 
     def abrir_troca_senha(self):
         janela = tk.Toplevel(self.root)
-        janela.title("Trocar senha")
+        janela.title("Change password")
         janela.geometry("380x340")
         janela.configure(bg=WHITE)
         janela.transient(self.root)
@@ -6461,17 +6461,17 @@ class MeuOrganizador:
         frame = tk.Frame(janela, bg=WHITE)
         frame.pack(fill="both", expand=True, padx=25, pady=25)
 
-        tk.Label(frame, text="Trocar senha", bg=WHITE, fg=TEXT, font=("Segoe UI", 15, "bold")).pack(anchor="w")
+        tk.Label(frame, text="Change password", bg=WHITE, fg=TEXT, font=("Segoe UI", 15, "bold")).pack(anchor="w")
 
-        tk.Label(frame, text="Senha atual", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 9)).pack(anchor="w", pady=(18, 3))
+        tk.Label(frame, text="Current password", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 9)).pack(anchor="w", pady=(18, 3))
         atual_entry = tk.Entry(frame, font=("Segoe UI", 10), relief="solid", bd=1, show="●")
         atual_entry.pack(fill="x", ipady=7)
 
-        tk.Label(frame, text="Nova senha", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 9)).pack(anchor="w", pady=(14, 3))
+        tk.Label(frame, text="New password", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 9)).pack(anchor="w", pady=(14, 3))
         nova_entry = tk.Entry(frame, font=("Segoe UI", 10), relief="solid", bd=1, show="●")
         nova_entry.pack(fill="x", ipady=7)
 
-        tk.Label(frame, text="Confirmar nova senha", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 9)).pack(anchor="w", pady=(14, 3))
+        tk.Label(frame, text="Confirm new password", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 9)).pack(anchor="w", pady=(14, 3))
         confirmar_entry = tk.Entry(frame, font=("Segoe UI", 10), relief="solid", bd=1, show="●")
         confirmar_entry.pack(fill="x", ipady=7)
 
@@ -6481,20 +6481,20 @@ class MeuOrganizador:
             senha_confirmar = confirmar_entry.get()
 
             if senha_nova != senha_confirmar:
-                messagebox.showwarning("Trocar senha", "A nova senha e a confirmação não são iguais.")
+                messagebox.showwarning("Change password", "The new password and confirmation do not match.")
                 return
 
             try:
                 alterar_senha(self.usuario["id"], senha_atual, senha_nova)
             except ValueError as erro:
-                messagebox.showerror("Trocar senha", str(erro))
+                messagebox.showerror("Change password", str(erro))
                 return
 
             janela.destroy()
-            messagebox.showinfo("Trocar senha", "Senha alterada com sucesso.")
+            messagebox.showinfo("Change password", "Password changed successfully.")
 
         tk.Button(
-            frame, text="Salvar nova senha", bg=BLUE, fg=WHITE,
+            frame, text="Save new password", bg=BLUE, fg=WHITE,
             activebackground=BLUE_DARK, activeforeground=WHITE,
             relief="flat", bd=0, command=salvar, cursor="hand2"
         ).pack(anchor="e", pady=(20, 0), ipadx=14, ipady=6)
@@ -6503,9 +6503,9 @@ class MeuOrganizador:
         try:
             destino = criar_backup_banco()
         except Exception as erro:
-            messagebox.showerror("Backup", f"Não foi possível criar o backup:\n\n{erro}")
+            messagebox.showerror("Backup", f"Could not create the backup:\n\n{erro}")
             return
-        messagebox.showinfo("Backup", f"Backup criado com sucesso em:\n\n{destino}")
+        messagebox.showinfo("Backup", f"Backup created successfully at:\n\n{destino}")
 
     # ========================================================
     # LOGOUT
@@ -6514,8 +6514,8 @@ class MeuOrganizador:
     def logout(self):
 
         resposta = messagebox.askyesno(
-            "Sair",
-            "Deseja sair da sua conta?"
+            "Log out",
+            "Are you sure you want to log out?"
         )
 
         if not resposta:
