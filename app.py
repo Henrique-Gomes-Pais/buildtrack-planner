@@ -11,10 +11,10 @@ import secrets
 
 
 # ============================================================
-# CONFIGURAÇÕES
+# CONFIGURATION
 # ============================================================
 
-APP_TITLE = "Planejamento de Construção"
+APP_TITLE = "Construction Planning"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_FILE = os.path.join(BASE_DIR, "meu_organizador_novo.db")
@@ -52,7 +52,7 @@ def conectar():
 
 
 def gerar_hash_senha(senha_texto, salt=None):
-    """Gera um hash seguro (PBKDF2) para a senha, com salt aleatório.
+    """Generates a secure hash (PBKDF2) for the password, with a random salt.
     Formato salvo: '<salt>$<hash>'."""
     if salt is None:
         salt = secrets.token_hex(16)
@@ -98,14 +98,14 @@ def adicionar_coluna(cursor, tabela, coluna, definicao):
 def criar_banco():
     """
     Cria o banco e acrescenta as estruturas novas.
-    A função tenta preservar bancos existentes.
+    This function attempts to preserve existing databases.
     """
 
     conexao = conectar()
     cursor = conexao.cursor()
 
     # --------------------------------------------------------
-    # USUÁRIOS
+    # USERS
     # --------------------------------------------------------
 
     cursor.execute("""
@@ -119,7 +119,7 @@ def criar_banco():
         )
     """)
 
-    # Compatibilidade com versões antigas.
+    # Compatibility with older versions.
     # Se existia uma tabela com "usuario" em vez de "login",
     # tentamos preservar os dados.
     if not coluna_existe(cursor, "usuarios", "login"):
@@ -191,7 +191,7 @@ def criar_banco():
     )
 
     # V7: tarefas passam a apontar para o cadastro central de projetos.
-    # Mantemos também a coluna textual "projeto" para compatibilidade com registros antigos.
+    # We also keep the "projeto" text column for compatibility with old records.
     adicionar_coluna(
         cursor,
         "tarefas",
@@ -200,7 +200,7 @@ def criar_banco():
     )
 
     # --------------------------------------------------------
-    # CONVERSAS / ALTERAÇÕES DAS TAREFAS
+    # TASK DISCUSSION / CHANGES
     # --------------------------------------------------------
 
     cursor.execute("""
@@ -244,7 +244,7 @@ def criar_banco():
         )
     """)
 
-    # V7: cadastro central de obras/projetos. Nada é apagado; apenas acrescentamos metadados.
+    # V7: central registry of sites/projects. Nothing is deleted; we only add metadata.
     adicionar_coluna(cursor, "projetos", "codigo", "TEXT DEFAULT ''")
     adicionar_coluna(cursor, "projetos", "cliente", "TEXT DEFAULT ''")
     adicionar_coluna(cursor, "projetos", "status", "TEXT DEFAULT 'Ativo'")
@@ -265,7 +265,7 @@ def criar_banco():
     """)
 
     # --------------------------------------------------------
-    # CONFERÊNCIAS
+    # REVIEWS
     # --------------------------------------------------------
 
     cursor.execute("""
@@ -295,10 +295,10 @@ def criar_banco():
     """)
 
     # --------------------------------------------------------
-    # SOLICITAÇÕES DE CONFERÊNCIA (V7)
+    # REVIEW REQUESTS (V7)
     # --------------------------------------------------------
-    # Cada envio de plano agora é um registro próprio. Isso separa projeto,
-    # autor, conferidor e histórico e permite aplicar privacidade por grupo.
+    # Each plan submission is now its own record. This separates project,
+    # author, reviewer and history, and allows applying per-group privacy.
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS solicitacoes_conferencia (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -335,7 +335,7 @@ def criar_banco():
     """)
 
     # --------------------------------------------------------
-    # INFORMAÇÕES ADICIONAIS
+    # ADDITIONAL MESSAGES
     # --------------------------------------------------------
 
     cursor.execute("""
@@ -379,7 +379,7 @@ def criar_banco():
     """)
 
     # --------------------------------------------------------
-    # LEITURA DAS INFORMAÇÕES
+    # MESSAGE READ STATUS
     # --------------------------------------------------------
 
     cursor.execute("""
@@ -395,8 +395,8 @@ def criar_banco():
     """)
 
     # --------------------------------------------------------
-    # EVENTOS DO CALENDÁRIO
-    # férias planejadas / férias confirmadas / Feierabend
+    # CALENDAR EVENTS
+    # planned vacation / confirmed vacation / early leave
     # --------------------------------------------------------
 
     cursor.execute("""
@@ -414,7 +414,7 @@ def criar_banco():
     """)
 
     # --------------------------------------------------------
-    # USUÁRIOS REAIS
+    # SAMPLE USERS
     # --------------------------------------------------------
 
     usuarios = [
@@ -437,7 +437,7 @@ def criar_banco():
     ]
 
     # Primeiro, tenta preencher login para bases antigas
-    # que possuíam a coluna "usuario".
+    # that had the "usuario" column.
     if coluna_existe(cursor, "usuarios", "usuario"):
         antigos = cursor.execute("""
             SELECT id, usuario
@@ -485,12 +485,12 @@ def criar_banco():
             except sqlite3.IntegrityError:
                 pass
 
-    # Observação: a senha NÃO é mais resetada aqui a cada abertura do programa.
-    # Isso permitia, antes, que uma troca de senha feita pelo usuário fosse
-    # apagada no próximo início do app. A senha só é definida na criação
-    # do usuário (acima) ou via alterar_senha().
+    # Note: the password is NO LONGER reset here every time the app opens.
+    # Previously, this allowed a password change made by the user to be
+    # erased on the app's next startup. The password is now only set when the
+    # user is created (above) or via alterar_senha().
 
-    # V7: associa tarefas antigas ao projeto central quando o nome já coincide.
+    # V7: links old tasks to the central project when the name already matches.
     cursor.execute("""
         UPDATE tarefas
         SET projeto_id = (
@@ -508,9 +508,9 @@ def criar_banco():
           )
     """)
 
-    # Preserva conferências antigas: cada combinação projeto/trabalhador vira
-    # uma solicitação "legada" somente uma vez. O histórico antigo continua
-    # também intacto na tabela conferencias.
+    # Preserves old reviews: each project/worker combination becomes
+    # a "legacy" request only once. The old history remains
+    # intact in the conferencias table as well.
     antigos = cursor.execute("""
         SELECT c.projeto_id, c.trabalhador_id,
                MIN(c.conferido_em) AS primeiro_em,
@@ -564,7 +564,7 @@ def criar_banco():
             antigo["projeto_id"],
             antigo["trabalhador_id"],
             nome_plano,
-            "Migrado automaticamente do histórico de conferências da versão anterior.",
+            "Automatically migrated from the previous version's review history.",
             status_antigo["status"] if status_antigo else "Em andamento",
             criado_em,
             conferido_em or criado_em,
@@ -580,7 +580,7 @@ def criar_banco():
         """, (
             sid,
             conferido_por,
-            "Registro preservado da versão anterior.",
+            "Record preserved from the previous version.",
             conferido_em or criado_em
         ))
 
@@ -589,7 +589,7 @@ def criar_banco():
 
 
 # ============================================================
-# USUÁRIOS
+# USERS
 # ============================================================
 
 def buscar_usuario(login, senha):
@@ -609,7 +609,7 @@ def buscar_usuario(login, senha):
     senha_armazenada = usuario["senha"] or ""
 
     if "$" in senha_armazenada:
-        # Já está no formato protegido (salt$hash).
+        # Already in the protected format (salt$hash).
         if not verificar_senha(senha, senha_armazenada):
             conexao.close()
             return None
@@ -630,7 +630,7 @@ def buscar_usuario(login, senha):
 
 
 def alterar_senha(usuario_id, senha_atual, senha_nova):
-    """Permite que o próprio usuário troque a senha, validando a senha atual
+    """Allows the user to change their own password, validating the current one
     (aceita tanto o formato antigo quanto o novo, migrando para o hash)."""
     conexao = conectar()
     usuario = conexao.execute(
@@ -648,7 +648,7 @@ def alterar_senha(usuario_id, senha_atual, senha_nova):
 
     if not valida:
         conexao.close()
-        raise ValueError("A senha atual está incorreta.")
+        raise ValueError("The current password is incorrect.")
 
     if len(senha_nova or "") < 6:
         conexao.close()
@@ -715,9 +715,9 @@ def buscar_plano(usuario_id, data_str):
 
 
 def salvar_plano(usuario_id, data_str, texto, autor_id=None):
-    """Salva um plano. Quando autor_id é informado, somente o próprio usuário pode editar."""
+    """Saves a plan. When autor_id is given, only the user themself can edit."""
     if autor_id is not None and int(autor_id) != int(usuario_id):
-        raise PermissionError("Somente o próprio trabalhador pode editar este plano.")
+        raise PermissionError("Only the worker themself can edit this plan.")
 
     conexao = conectar()
     agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -768,7 +768,7 @@ def contar_informacoes_nao_lidas(usuario_id):
 
 
 # ============================================================
-# EVENTOS DO CALENDÁRIO
+# CALENDAR EVENTS
 # ============================================================
 
 PRESENCA_GRUPO_1 = {"noah", "liam", "owen"}
@@ -787,8 +787,8 @@ def grupo_presenca(login):
 def logins_eventos_visiveis(login, perfil):
     """
     Gestores/planejamento/chefia enxergam toda a equipe.
-    Trabalhadores enxergam férias/presença do próprio bloco para conseguirem
-    coordenar cobertura, além de seus próprios registros.
+    Workers can see vacation/presence for their own group so they can
+    coordinate coverage, in addition to their own records.
     """
     login = (login or "").strip().lower()
     if perfil in ("planner", "lead", "manager"):
@@ -849,12 +849,12 @@ def usuario_em_ferias_na_data(usuario_id, data_str):
 
 
 def pode_registrar_feierabend(usuario_id, data_str, hora):
-    """Seg-qui: pelo menos uma pessoa do MESMO grupo deve permanecer até 16:30."""
+    """Mon-Thu: at least one person from the SAME group must stay until 4:30 PM."""
     try:
         d = datetime.strptime(data_str, "%Y-%m-%d").date()
         h = datetime.strptime(hora, "%H:%M").time()
     except ValueError:
-        return False, "Data ou hora inválida."
+        return False, "Invalid date or time."
 
     conexao = conectar()
     usuario = conexao.execute(
@@ -868,7 +868,7 @@ def pode_registrar_feierabend(usuario_id, data_str, hora):
     grupo = grupo_presenca(usuario["login"])
     if not grupo:
         conexao.close()
-        return False, "Seu perfil não participa de um grupo de cobertura de Feierabend."
+        return False, "Your role is not part of an early-leave coverage group."
 
     # Sexta e fim de semana: sem trava de cobertura.
     if d.weekday() >= 4:
@@ -877,7 +877,7 @@ def pode_registrar_feierabend(usuario_id, data_str, hora):
 
     if h < datetime.strptime("15:00", "%H:%M").time():
         conexao.close()
-        return False, "De segunda a quinta o Feierabend não pode ser registrado antes das 15:00."
+        return False, "From Monday to Thursday, early leave cannot be logged before 3:00 PM."
 
     if h >= datetime.strptime("16:30", "%H:%M").time():
         conexao.close()
@@ -896,7 +896,7 @@ def pode_registrar_feierabend(usuario_id, data_str, hora):
         if int(pessoa["id"]) == int(usuario_id):
             continue
 
-        # Férias aprovadas removem a pessoa da cobertura.
+        # Approved vacation removem a pessoa da cobertura.
         ferias = conexao.execute("""
             SELECT 1 FROM eventos_calendario
             WHERE usuario_id = ? AND tipo = 'ferias'
@@ -921,14 +921,14 @@ def pode_registrar_feierabend(usuario_id, data_str, hora):
     nomes = " / ".join(p["nome"] for p in pessoas)
     conexao.close()
     return False, (
-        "Não é possível registrar essa saída: com os registros atuais, ninguém "
-        f"do seu grupo ({nomes}) permaneceria no setor até 16:30."
+        "This early leave cannot be logged: based on current records, no one "
+        f"from your group ({nomes}) would remain on site until 4:30 PM."
     )
 
 
 
 def aprovar_ferias(evento_id, aprovador_id):
-    """Marion transforma férias planejadas em férias aprovadas/confirmadas."""
+    """Priya turns planned vacation into approved/confirmed vacation."""
     conexao = conectar()
     aprovador = conexao.execute(
         "SELECT login FROM usuarios WHERE id = ?",
@@ -940,10 +940,10 @@ def aprovar_ferias(evento_id, aprovador_id):
     ).fetchone()
     if not aprovador or aprovador["login"].lower() != "priya":
         conexao.close()
-        raise PermissionError("Somente Marion pode aprovar férias nesta versão.")
+        raise PermissionError("Only Priya can approve vacation in this version.")
     if not evento or evento["tipo"] != "ferias_planejadas":
         conexao.close()
-        raise ValueError("Este registro não é um planejamento de férias pendente.")
+        raise ValueError("This record is not a pending vacation request.")
     conexao.execute(
         "UPDATE eventos_calendario SET tipo = 'ferias' WHERE id = ?",
         (evento_id,)
@@ -1239,7 +1239,7 @@ def mover_tarefa(tarefa_id, direcao):
 def buscar_projetos(status="Ativo"):
     """
     Retorna projetos do cadastro central.
-    Por padrão, somente os projetos Ativos aparecem nos seletores operacionais.
+    By default, only Active projects appear in the operational selectors.
     Passe status=None para obter todos.
     """
     conexao = conectar()
@@ -1306,7 +1306,7 @@ def criar_projeto(
     """, (nome,)).fetchone()
     if existente:
         conexao.close()
-        raise ValueError("Já existe um projeto com esse nome.")
+        raise ValueError("A project with this name already exists.")
 
     agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ativo = 1 if status == "Ativo" else 0
@@ -1351,7 +1351,7 @@ def atualizar_projeto(
     """, (nome, projeto_id)).fetchone()
     if duplicado:
         conexao.close()
-        raise ValueError("Já existe outro projeto com esse nome.")
+        raise ValueError("Another project with this name already exists.")
 
     agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ativo = 1 if status == "Ativo" else 0
@@ -1375,7 +1375,7 @@ def atualizar_projeto(
         cliente or "", status, ativo, agora, finalizado_em, projeto_id
     ))
 
-    # Mantém o nome textual das tarefas sincronizado quando elas já estão ligadas por projeto_id.
+    # Keeps the task's text name in sync when it is already linked via projeto_id.
     conexao.execute("""
         UPDATE tarefas SET projeto = ?
         WHERE projeto_id = ?
@@ -1436,7 +1436,7 @@ def salvar_status_projeto_trabalhador(projeto_id, trabalhador_id, status):
                     ON CONFLICT(projeto_id,trabalhador_id) DO UPDATE SET status=excluded.status, atualizado_em=excluded.atualizado_em""",(projeto_id,trabalhador_id,status,agora)); conexao.commit(); conexao.close()
 
 # ============================================================
-# CONVERSAS / ALTERAÇÕES DE TAREFAS
+# TASK DISCUSSION / CHANGES
 # ============================================================
 
 def buscar_conversas_tarefa(tarefa_id):
@@ -1478,8 +1478,8 @@ def adicionar_conversa_tarefa(tarefa_id, autor_id, participantes, texto, arquivo
     conexao.commit(); conexao.close()
     return conversa_id
 
-# Matriz de conferência V7 é calculada por grupo_conferencia().
-# Bene é conferidor geral e não pertence operacionalmente aos grupos.
+# The V7 review matrix is calculated by grupo_conferencia().
+# Dana is a general reviewer and does not operationally belong to the groups.
 
 
 def grupo_conferencia(login):
@@ -1494,7 +1494,7 @@ def grupo_conferencia(login):
 
 
 def pode_ver_solicitacao(login_visualizador, login_autor):
-    """Privacidade real: o registro só é entregue ao próprio grupo e ao Bene."""
+    """Real privacy: the record is only delivered to the group itself and to Dana."""
     visualizador = (login_visualizador or "").strip().lower()
     autor = (login_autor or "").strip().lower()
     if not visualizador or not autor:
@@ -1509,7 +1509,7 @@ def pode_ver_solicitacao(login_visualizador, login_autor):
 
 
 def pode_conferir_plano(login_conferidor, login_autor):
-    """Bene confere todos. Os demais só conferem outro membro do próprio grupo."""
+    """Dana reviews everyone. Everyone else only reviews members of their own group."""
     conferidor = (login_conferidor or "").strip().lower()
     autor = (login_autor or "").strip().lower()
     if not conferidor or not autor or conferidor == autor:
@@ -1521,7 +1521,7 @@ def pode_conferir_plano(login_conferidor, login_autor):
     return gc is not None and gc == ga
 
 # ============================================================
-# CONFERÊNCIAS
+# REVIEWS
 # ============================================================
 
 
@@ -1539,17 +1539,17 @@ def criar_solicitacao_conferencia(
         raise ValueError("User not found.")
     if autor["login"].lower() == "dana":
         conexao.close()
-        raise PermissionError("Bene é conferidor geral e não envia planos para conferência.")
+        raise PermissionError("Dana is a general reviewer and does not submit plans for review.")
 
     projeto = conexao.execute("""
         SELECT id, status FROM projetos WHERE id = ?
     """, (projeto_id,)).fetchone()
     if not projeto:
         conexao.close()
-        raise ValueError("Projeto não encontrado.")
+        raise ValueError("Project not found.")
     if projeto["status"] != "Ativo":
         conexao.close()
-        raise ValueError("Somente projetos ativos podem receber novos planos para conferência.")
+        raise ValueError("Only active projects can receive new plans for review.")
 
     nome_plano = (nome_plano or "").strip()
     if not nome_plano:
@@ -1567,7 +1567,7 @@ def criar_solicitacao_conferencia(
     conexao.execute("""
         INSERT INTO solicitacao_conferencia_historico
         (solicitacao_id, tipo, usuario_id, texto, criado_em)
-        VALUES (?, 'envio', ?, 'Plano enviado para conferência.', ?)
+        VALUES (?, 'envio', ?, 'Plan submitted for review.', ?)
     """, (sid, autor_id, agora))
     conexao.commit()
     conexao.close()
@@ -1614,16 +1614,16 @@ def buscar_solicitacoes_visiveis(login_visualizador):
 
 
 def atualizar_status_solicitacao(solicitacao_id, autor_id, status):
-    permitidos = {"Em andamento", "Ajustar após conferência", "Concluído"}
+    permitidos = {"Em andamento", "Adjust after review", "Completed"}
     if status not in permitidos:
-        raise ValueError("Status inválido.")
+        raise ValueError("Invalid status.")
     conexao = conectar()
     sol = conexao.execute("""
         SELECT autor_id FROM solicitacoes_conferencia WHERE id = ?
     """, (solicitacao_id,)).fetchone()
     if not sol:
         conexao.close()
-        raise ValueError("Solicitação não encontrada.")
+        raise ValueError("Request not found.")
     if int(sol["autor_id"]) != int(autor_id):
         conexao.close()
         raise PermissionError("Somente o autor do plano pode alterar este status.")
@@ -1656,10 +1656,10 @@ def conferir_solicitacao(solicitacao_id, conferidor_id, observacao=""):
 
     if not sol or not conf:
         conexao.close()
-        raise ValueError("Solicitação ou conferidor não encontrado.")
+        raise ValueError("Request or reviewer not found.")
     if not pode_conferir_plano(conf["login"], sol["autor_login"]):
         conexao.close()
-        raise PermissionError("Você não está no grupo autorizado para conferir este plano.")
+        raise PermissionError("You are not in the group authorized to review this plan.")
 
     agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conexao.execute("""
@@ -1678,11 +1678,11 @@ def conferir_solicitacao(solicitacao_id, conferidor_id, observacao=""):
         VALUES (?, 'conferencia', ?, ?, ?)
     """, (
         solicitacao_id, conferidor_id,
-        "Plano conferido." + (f" Observação: {observacao}" if observacao else ""),
+        "Plano conferido." + (f" Note: {observacao}" if observacao else ""),
         agora
     ))
 
-    # Mantém a tabela antiga alimentada para compatibilidade com históricos já existentes.
+    # Keeps the old table populated for compatibility with existing history.
     conexao.execute("""
         INSERT INTO conferencias
         (projeto_id, trabalhador_id, conferido_por, observacao, conferido_em)
@@ -1771,7 +1771,7 @@ def registrar_conferencia(
 
 
 # ============================================================
-# INFORMAÇÕES
+# MESSAGES
 # ============================================================
 
 def criar_informacao(
@@ -2008,7 +2008,7 @@ def buscar_anexos(informacao_id):
 
 
 # ============================================================
-# APLICAÇÃO
+# APPLICATION
 # ============================================================
 
 class MeuOrganizador:
@@ -2034,7 +2034,7 @@ class MeuOrganizador:
         self.root.title(APP_TITLE)
         self.root.geometry("1200x760")
         # Evita o ponto em que componentes ficam sobrepostos; abaixo disso
-        # usamos rolagem/compactação em vez de "sumir" com conteúdo.
+        # we use scrolling/compacting instead of making content disappear.
         self.root.minsize(760, 520)
         self.root.configure(bg=BG)
         self.configurar_estilos()
@@ -2092,8 +2092,8 @@ class MeuOrganizador:
             selectforeground=[("readonly", TEXT)]
         )
 
-        # Scrollbars modernas: finas, sem setas e sem o visual clássico do Windows.
-        # O layout abaixo mantém somente trilho + alça. A rolagem pelo mouse continua normal.
+        # Modern scrollbars: thin, no arrows and without the classic Windows look.
+        # The layout below keeps only track + thumb. Mouse-wheel scrolling still works normally.
         style.layout(
             "Modern.Vertical.TScrollbar",
             [(
@@ -2219,7 +2219,7 @@ class MeuOrganizador:
 
         tk.Label(
             marca,
-            text="Planejamento de Construção",
+            text="Construction Planning",
             bg=SIDEBAR,
             fg=WHITE,
             font=("Segoe UI", 21, "bold"),
@@ -2247,7 +2247,7 @@ class MeuOrganizador:
             font=("Segoe UI", 9)
         ).pack(anchor="center", pady=20)
 
-        # Sem largura fixa: o formulário acompanha a janela e não invade o painel esquerdo.
+        # No fixed width: the form follows the window and doesn't invade the left panel.
         card_externo = tk.Frame(direita, bg=WHITE)
         card_externo.pack(fill="both", expand=True, padx=42, pady=40)
         card = tk.Frame(card_externo, bg=WHITE)
@@ -2290,7 +2290,7 @@ class MeuOrganizador:
 
             messagebox.showwarning(
                 "Login",
-                "Digite o usuário e a senha."
+                "Enter your username and password."
             )
 
             return
@@ -2329,7 +2329,7 @@ class MeuOrganizador:
         self.mostrar_app()
 
     # ========================================================
-    # APLICAÇÃO PRINCIPAL
+    # MAIN APPLICATION
     # ========================================================
 
 
@@ -2380,9 +2380,9 @@ class MeuOrganizador:
             canvas_w = max(self.canvas_conteudo.winfo_width(), 1)
             pedido = max(self.conteudo.winfo_reqwidth(), 1)
 
-            # A tela acompanha a largura quando consegue. Se algum formulário/tabela
-            # realmente precisar de mais espaço, preserva a largura requisitada e
-            # a barra horizontal passa a funcionar em vez de cortar o conteúdo.
+            # The screen follows the width when it can. If some form/table
+            # really needs more space, the requested width is preserved and
+            # the horizontal scrollbar kicks in instead of cutting off content.
             largura = max(canvas_w, pedido if pedido > canvas_w else canvas_w)
             self.canvas_conteudo.itemconfigure(self._conteudo_window, width=largura)
             self.canvas_conteudo.configure(scrollregion=self.canvas_conteudo.bbox("all"))
@@ -2429,13 +2429,13 @@ class MeuOrganizador:
                     self.sidebar_logos_frame.pack_forget()
                     self.sidebar_topo.pack_configure(padx=8, pady=(18, 18))
                 elif modo == "medio":
-                    self.sidebar_titulo.configure(text="Planejamento\nde Construção", font=("Segoe UI", 11, "bold"), justify="left")
+                    self.sidebar_titulo.configure(text="Construction\nPlanning", font=("Segoe UI", 11, "bold"), justify="left")
                     self.sidebar_subtitulo.configure(text="Planung & Projetos", font=("Segoe UI", 7))
                     if not self.sidebar_logos_frame.winfo_ismapped():
                         self.sidebar_logos_frame.pack(fill="x", pady=(7, 0))
                     self.sidebar_topo.pack_configure(padx=12, pady=(20, 22))
                 else:
-                    self.sidebar_titulo.configure(text="Planejamento de\nConstrução", font=("Segoe UI", 13, "bold"), justify="left")
+                    self.sidebar_titulo.configure(text="Construction\nPlanning", font=("Segoe UI", 13, "bold"), justify="left")
                     self.sidebar_subtitulo.configure(text="Team Planning & Projects", font=("Segoe UI", 8))
                     if not self.sidebar_logos_frame.winfo_ismapped():
                         self.sidebar_logos_frame.pack(fill="x", pady=(7, 0))
@@ -2494,7 +2494,7 @@ class MeuOrganizador:
 
 
     def _organizar_cards_inicio(self, largura=None):
-        """Reorganiza os cards do início em 1/2/4 colunas conforme a largura."""
+        """Rearranges the home cards into 1/2/4 columns based on width."""
         parent = getattr(self, "cards_inicio", None)
         if not parent or not parent.winfo_exists():
             return
@@ -2524,7 +2524,7 @@ class MeuOrganizador:
         marca.pack(fill="x")
 
         self.sidebar_titulo = tk.Label(
-            marca, text="Planejamento de\nConstrução", bg=SIDEBAR, fg=WHITE,
+            marca, text="Construction\nPlanning", bg=SIDEBAR, fg=WHITE,
             font=("Segoe UI", 13, "bold"), justify="left"
         )
         self.sidebar_titulo.pack(anchor="w")
@@ -2665,7 +2665,7 @@ class MeuOrganizador:
                 )
 
     # ========================================================
-    # CABEÇALHO
+    # HEADER
     # ========================================================
 
     def titulo_pagina(
@@ -2837,7 +2837,7 @@ class MeuOrganizador:
             self.mostrar_inicio()
 
     # ========================================================
-    # INÍCIO
+    # HOME
     # ========================================================
 
     def mostrar_inicio(self):
@@ -2858,11 +2858,11 @@ class MeuOrganizador:
 
         self.titulo_pagina(
             "Bom dia, " + nome + " 👋",
-            "Aqui está o seu espaço de trabalho."
+            "Here is your workspace."
         )
 
         if self.usuario["login"] == "priya":
-            self.criar_painel_marion(self.conteudo)
+            self.criar_painel_priya(self.conteudo)
 
         self.criar_seletor_trabalhador(
             self.conteudo
@@ -2916,7 +2916,7 @@ class MeuOrganizador:
 
         self.criar_card(
             cards,
-            "CONCLUÍDAS",
+            "COMPLETED",
             str(len(antigas)),
             GREEN
         )
@@ -2948,7 +2948,7 @@ class MeuOrganizador:
         if self.usuario["perfil"] == "worker":
             self.criar_card(
                 cards,
-                "INFORMAÇÕES NOVAS",
+                "NEW MESSAGES",
                 str(contar_informacoes_nao_lidas(self.usuario["id"])),
                 PURPLE
             )
@@ -3038,7 +3038,7 @@ class MeuOrganizador:
         elif pode_editar_hoje:
             tk.Label(
                 painel,
-                text="Escreva rapidamente o que você pretende fazer hoje.",
+                text="Quickly write what you plan to do today.",
                 bg=WHITE,
                 fg=TEXT_LIGHT,
                 font=("Segoe UI", 9)
@@ -3082,7 +3082,7 @@ class MeuOrganizador:
             ).pack(anchor="w", padx=20, pady=(2, 15))
 
         # ----------------------------------------------------
-        # PLANEJAMENTO DE AMANHÃ
+        # TOMORROW'S PLAN
         # ----------------------------------------------------
         amanha = (date.fromisoformat(self.data_atual) + timedelta(days=1)).strftime("%Y-%m-%d")
         plano_amanha = buscar_plano(alvo["id"], amanha) if alvo else None
@@ -3100,7 +3100,7 @@ class MeuOrganizador:
         cab_amanha.pack(fill="x", padx=20, pady=(13, 5))
         tk.Label(
             cab_amanha,
-            text="📅  O que pretendo fazer amanhã",
+            text="📅  What I plan to do tomorrow",
             bg=WHITE,
             fg=TEXT,
             font=("Segoe UI", 14, "bold")
@@ -3154,7 +3154,7 @@ class MeuOrganizador:
             self.plano_amanha_text.pack(fill="x", padx=20)
             tk.Button(
                 painel_amanha,
-                text="Salvar planejamento de amanhã",
+                text="Save tomorrow's plan",
                 bg=BLUE,
                 fg=WHITE,
                 activebackground=BLUE_DARK,
@@ -3168,14 +3168,14 @@ class MeuOrganizador:
         else:
             tk.Label(
                 painel_amanha,
-                text="Nenhum planejamento de amanhã registrado.",
+                text="No plan for tomorrow yet.",
                 bg=WHITE,
                 fg=TEXT_LIGHT,
                 font=("Segoe UI", 9)
             ).pack(anchor="w", padx=20, pady=(2, 14))
 
         # ----------------------------------------------------
-        # RESUMO RÁPIDO
+        # QUICK SUMMARY
         # ----------------------------------------------------
 
         resumo = tk.Frame(
@@ -3194,8 +3194,8 @@ class MeuOrganizador:
             alvo
         )
 
-    def criar_painel_marion(self, parent):
-        """Resumo exclusivo da Marion para a reunião diária."""
+    def criar_painel_priya(self, parent):
+        """Summary exclusive to Priya for the daily meeting."""
         painel = tk.Frame(parent, bg=WHITE, highlightbackground=BORDER, highlightthickness=1)
         painel.pack(fill="x", padx=30, pady=(0, 12))
 
@@ -3206,16 +3206,16 @@ class MeuOrganizador:
 
         cab = tk.Frame(painel, bg=WHITE)
         cab.pack(fill="x", padx=18, pady=(12, 5))
-        tk.Label(cab, text="📋 Resumo da reunião", bg=WHITE, fg=TEXT, font=("Segoe UI", 14, "bold")).pack(side="left")
-        tk.Label(cab, text="Leitura rápida", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 9)).pack(side="left", padx=10)
+        tk.Label(cab, text="📋 Meeting summary", bg=WHITE, fg=TEXT, font=("Segoe UI", 14, "bold")).pack(side="left")
+        tk.Label(cab, text="Quick read", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 9)).pack(side="left", padx=10)
 
         corpo = tk.Frame(painel, bg=WHITE)
         corpo.pack(fill="x", padx=18, pady=(0, 10))
-        self._adicionar_linhas_resumo_marion(corpo, "Tarefas de hoje", planos_hoje)
+        self._adicionar_linhas_resumo_priya(corpo, "Tarefas de hoje", planos_hoje)
         tk.Frame(corpo, bg=BORDER, height=1).pack(fill="x", pady=7)
-        self._adicionar_linhas_resumo_marion(corpo, "Planejamento de amanhã", planos_amanha)
+        self._adicionar_linhas_resumo_priya(corpo, "Tomorrow's plan", planos_amanha)
 
-    def _adicionar_linhas_resumo_marion(self, parent, titulo, registros):
+    def _adicionar_linhas_resumo_priya(self, parent, titulo, registros):
         tk.Label(parent, text=titulo, bg=WHITE, fg=TEXT, font=("Segoe UI Semibold", 9)).pack(anchor="w", pady=(2, 4))
         if not registros:
             tk.Label(parent, text="Nenhum planejamento registrado.", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 9)).pack(anchor="w", pady=(0, 5))
@@ -3276,7 +3276,7 @@ class MeuOrganizador:
 
         tk.Label(
             frame,
-            text="Próximas tarefas",
+            text="Upcoming tasks",
             bg=WHITE,
             fg=TEXT,
             font=("Segoe UI", 13, "bold")
@@ -3364,19 +3364,19 @@ class MeuOrganizador:
     def editar_plano(self):
         alvo = self.alvo_atual()
         if not alvo or self.usuario["perfil"] != "worker" or int(alvo["id"]) != int(self.usuario["id"]):
-            messagebox.showwarning("Permissão", "Somente você pode editar seu próprio Plano do Dia.")
+            messagebox.showwarning("Permission", "Only you can edit your own Daily Plan.")
             return
         plano = buscar_plano(alvo["id"], self.data_atual)
-        self.abrir_editor_plano(plano["texto"] if plano else "", self.data_atual, "Plano do dia")
+        self.abrir_editor_plano(plano["texto"] if plano else "", self.data_atual, "Daily plan")
 
     def editar_plano_amanha(self):
         alvo = self.alvo_atual()
         if not alvo or self.usuario["perfil"] != "worker" or int(alvo["id"]) != int(self.usuario["id"]):
-            messagebox.showwarning("Permissão", "Somente você pode editar seu próprio planejamento.")
+            messagebox.showwarning("Permission", "Only you can edit your own plan.")
             return
         amanha = (date.fromisoformat(self.data_atual) + timedelta(days=1)).strftime("%Y-%m-%d")
         plano = buscar_plano(alvo["id"], amanha)
-        self.abrir_editor_plano(plano["texto"] if plano else "", amanha, "Planejamento de amanhã")
+        self.abrir_editor_plano(plano["texto"] if plano else "", amanha, "Tomorrow's plan")
 
     def abrir_editor_plano(self, texto_atual="", data_str=None, titulo_editor="Plano do dia"):
         janela = tk.Toplevel(self.root)
@@ -3397,7 +3397,7 @@ class MeuOrganizador:
         def salvar():
             alvo = self.alvo_atual()
             if not alvo or self.usuario["perfil"] != "worker" or int(alvo["id"]) != int(self.usuario["id"]):
-                messagebox.showerror("Permissão", "Somente você pode editar seu próprio planejamento.")
+                messagebox.showerror("Permission", "Only you can edit your own plan.")
                 return
             data_salvar = data_str or self.data_atual
             texto_novo = texto.get("1.0", "end-1c").strip()
@@ -3407,7 +3407,7 @@ class MeuOrganizador:
             try:
                 salvar_plano(alvo["id"], data_salvar, texto_novo, self.usuario["id"])
             except PermissionError as erro:
-                messagebox.showerror("Permissão", str(erro))
+                messagebox.showerror("Permission", str(erro))
                 return
             janela.destroy()
             self.mostrar_inicio()
@@ -3417,7 +3417,7 @@ class MeuOrganizador:
     def salvar_plano_tela(self):
         alvo = self.alvo_atual()
         if not alvo or self.usuario["perfil"] != "worker" or int(alvo["id"]) != int(self.usuario["id"]):
-            messagebox.showerror("Permissão", "Somente você pode editar seu próprio Plano do Dia.")
+            messagebox.showerror("Permission", "Only you can edit your own Daily Plan.")
             return
         texto = self.plano_text.get("1.0", "end-1c").strip()
         if not texto:
@@ -3426,24 +3426,24 @@ class MeuOrganizador:
         try:
             salvar_plano(alvo["id"], self.data_atual, texto, self.usuario["id"])
         except PermissionError as erro:
-            messagebox.showerror("Permissão", str(erro))
+            messagebox.showerror("Permission", str(erro))
             return
         self.mostrar_inicio()
 
     def salvar_plano_amanha_tela(self):
         alvo = self.alvo_atual()
         if not alvo or self.usuario["perfil"] != "worker" or int(alvo["id"]) != int(self.usuario["id"]):
-            messagebox.showerror("Permissão", "Somente você pode editar seu próprio planejamento.")
+            messagebox.showerror("Permission", "Only you can edit your own plan.")
             return
         texto = self.plano_amanha_text.get("1.0", "end-1c").strip()
         if not texto:
-            messagebox.showwarning("Amanhã", "Escreva alguma coisa antes de salvar.")
+            messagebox.showwarning("Tomorrow", "Escreva alguma coisa antes de salvar.")
             return
         amanha = (date.fromisoformat(self.data_atual) + timedelta(days=1)).strftime("%Y-%m-%d")
         try:
             salvar_plano(alvo["id"], amanha, texto, self.usuario["id"])
         except PermissionError as erro:
-            messagebox.showerror("Permissão", str(erro))
+            messagebox.showerror("Permission", str(erro))
             return
         self.mostrar_inicio()
 
@@ -3560,7 +3560,7 @@ class MeuOrganizador:
 
         self.tabela.heading(
             "descricao",
-            text="Descrição"
+            text="Description"
         )
 
         self.tabela.column(
@@ -3810,37 +3810,37 @@ class MeuOrganizador:
 
     def abrir_conversas_tarefa(self, tarefa):
         if not tarefa:
-            messagebox.showinfo("Conversa / Alterações", "Salve a tarefa primeiro para registrar conversas e scanners.")
+            messagebox.showinfo("Discussion / Changes", "Save the task first to log discussion and scans.")
             return
         janela = tk.Toplevel(self.root)
-        janela.title("Conversa / Alterações — " + tarefa["titulo"])
+        janela.title("Discussion / Changes — " + tarefa["titulo"])
         janela.geometry("820x650"); janela.minsize(650, 500); janela.configure(bg=BG); janela.transient(self.root)
         topo = tk.Frame(janela, bg=WHITE, highlightbackground=BORDER, highlightthickness=1)
         topo.pack(fill="x", padx=22, pady=(22,10))
-        tk.Label(topo, text="Conversa / Alterações", bg=WHITE, fg=TEXT, font=("Segoe UI",18,"bold")).pack(anchor="w", padx=18, pady=(15,2))
-        tk.Label(topo, text=tarefa["titulo"] + "  •  histórico técnico, decisões e scanners", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI",9)).pack(anchor="w", padx=18, pady=(0,15))
+        tk.Label(topo, text="Discussion / Changes", bg=WHITE, fg=TEXT, font=("Segoe UI",18,"bold")).pack(anchor="w", padx=18, pady=(15,2))
+        tk.Label(topo, text=tarefa["titulo"] + "  •  technical history, decisions and scans", bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI",9)).pack(anchor="w", padx=18, pady=(0,15))
         form = tk.Frame(janela, bg=WHITE, highlightbackground=BORDER, highlightthickness=1); form.pack(fill="x", padx=22, pady=6)
         fi=tk.Frame(form,bg=WHITE); fi.pack(fill="x",padx=18,pady=15)
         tk.Label(fi,text="Participantes",bg=WHITE,fg=TEXT,font=("Segoe UI Semibold",9)).pack(anchor="w")
         participantes=tk.Entry(fi,font=("Segoe UI",10),relief="solid",bd=1); participantes.pack(fill="x",ipady=6,pady=(4,10))
-        tk.Label(fi,text="Decisão / motivo da alteração",bg=WHITE,fg=TEXT,font=("Segoe UI Semibold",9)).pack(anchor="w")
+        tk.Label(fi,text="Decision / reason for the change",bg=WHITE,fg=TEXT,font=("Segoe UI Semibold",9)).pack(anchor="w")
         texto=tk.Text(fi,height=4,font=("Segoe UI",10),relief="solid",bd=1,wrap="word"); texto.pack(fill="x",pady=(4,8))
         arquivos=[]; arq_lbl=tk.Label(fi,text="Nenhum scanner/anexo selecionado.",bg=WHITE,fg=TEXT_LIGHT,font=("Segoe UI",8)); arq_lbl.pack(anchor="w")
         botoes=tk.Frame(fi,bg=WHITE); botoes.pack(fill="x",pady=(8,0))
         def selecionar():
-            vals=filedialog.askopenfilenames(title="Selecionar scanners, PDFs ou imagens", parent=janela)
+            vals=filedialog.askopenfilenames(title="Select scans, PDFs or images", parent=janela)
             if vals:
                 arquivos[:] = vals; arq_lbl.config(text=f"{len(vals)} arquivo(s) selecionado(s)")
         def salvar_conv():
             msg=texto.get("1.0","end-1c").strip()
             if not msg:
-                messagebox.showwarning("Conversa", "Descreva a decisão ou alteração.", parent=janela); return
+                messagebox.showwarning("Conversa", "Describe the decision or change.", parent=janela); return
             adicionar_conversa_tarefa(tarefa["id"], self.usuario["id"], participantes.get().strip(), msg, arquivos)
             janela.destroy(); self.abrir_conversas_tarefa(tarefa)
         tk.Button(botoes,text="📎 Anexar scanner/documento",bg="#EEF2F7",fg=TEXT,relief="flat",bd=0,cursor="hand2",command=selecionar).pack(side="left",ipadx=9,ipady=5)
         tk.Button(botoes,text="Registrar conversa",bg=BLUE,fg=WHITE,activebackground=BLUE_DARK,relief="flat",bd=0,cursor="hand2",font=("Segoe UI Semibold",9),command=salvar_conv).pack(side="right",ipadx=12,ipady=6)
         hist=tk.Frame(janela,bg=WHITE,highlightbackground=BORDER,highlightthickness=1); hist.pack(fill="both",expand=True,padx=22,pady=(6,22))
-        tk.Label(hist,text="Histórico",bg=WHITE,fg=TEXT,font=("Segoe UI",13,"bold")).pack(anchor="w",padx=18,pady=(14,8))
+        tk.Label(hist,text="History",bg=WHITE,fg=TEXT,font=("Segoe UI",13,"bold")).pack(anchor="w",padx=18,pady=(14,8))
         canvas=tk.Canvas(hist,bg=WHITE,highlightthickness=0); sb=ttk.Scrollbar(hist,orient="vertical",command=canvas.yview,style="Modern.Vertical.TScrollbar"); lista=tk.Frame(canvas,bg=WHITE)
         lista.bind("<Configure>",lambda e: canvas.configure(scrollregion=canvas.bbox("all"))); canvas.create_window((0,0),window=lista,anchor="nw"); canvas.configure(yscrollcommand=sb.set)
         canvas.pack(side="left",fill="both",expand=True,padx=(14,0),pady=(0,12)); sb.pack(side="right",fill="y",pady=(0,12),padx=(0,8))
@@ -3848,7 +3848,7 @@ class MeuOrganizador:
         if not registros: tk.Label(lista,text="Nenhuma conversa registrada ainda.",bg=WHITE,fg=TEXT_LIGHT).pack(anchor="w",padx=5,pady=12)
         for r in registros:
             card=tk.Frame(lista,bg="#F8FAFC",highlightbackground=BORDER,highlightthickness=1); card.pack(fill="x",padx=5,pady=4)
-            cab=f"{r['autor_nome'] or 'Usuário'} — {self.formatar_data_hora(r['criado_em'])}"
+            cab=f"{r['autor_nome'] or 'User'} — {self.formatar_data_hora(r['criado_em'])}"
             tk.Label(card,text=cab,bg="#F8FAFC",fg=BLUE_DARK,font=("Segoe UI Semibold",9)).pack(anchor="w",padx=12,pady=(9,2))
             if r['participantes']: tk.Label(card,text="Participantes: "+r['participantes'],bg="#F8FAFC",fg=TEXT_LIGHT,font=("Segoe UI",8)).pack(anchor="w",padx=12)
             tk.Label(card,text=r['texto'],bg="#F8FAFC",fg=TEXT,font=("Segoe UI",9),justify="left",wraplength=700).pack(anchor="w",padx=12,pady=(4,7))
@@ -3897,7 +3897,7 @@ class MeuOrganizador:
         janela.transient(self.root)
         janela.grab_set()
 
-        # Conteúdo rolável também nas janelas de edição.
+        # Scrollable content in edit windows too.
         externo = tk.Frame(janela, bg=WHITE)
         externo.pack(fill="both", expand=True)
         canvas = tk.Canvas(externo, bg=WHITE, highlightthickness=0)
@@ -3925,7 +3925,7 @@ class MeuOrganizador:
             bg=WHITE, fg=TEXT, font=("Segoe UI", 20, "bold")
         ).pack(anchor="w")
 
-        tk.Label(interno, text="Título", bg=WHITE, fg=TEXT,
+        tk.Label(interno, text="Title", bg=WHITE, fg=TEXT,
                  font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(20, 4))
         titulo_entry = tk.Entry(interno, font=("Segoe UI", 11), relief="solid", bd=1)
         titulo_entry.pack(fill="x", ipady=8)
@@ -3933,14 +3933,14 @@ class MeuOrganizador:
         tk.Label(interno, text="Projeto", bg=WHITE, fg=TEXT,
                  font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(12, 4))
 
-        # A tarefa NÃO cria projeto. Ela somente aponta para o cadastro central.
+        # The task does NOT create a project. It only points to the central registry.
         projetos = buscar_projetos("Ativo")
         projeto_por_nome = {p["nome"]: p for p in projetos}
         projeto_nomes = ["— Sem projeto —"] + [p["nome"] for p in projetos]
 
         projeto_atual_nome = (tarefa["projeto"] or "") if tarefa else ""
         if projeto_atual_nome and projeto_atual_nome not in projeto_por_nome:
-            # Permite editar um registro antigo ou ligado a projeto já finalizado,
+            # Allows editing an old record or one linked to an already-finished project,
             # sem transformar o texto em um novo projeto.
             projeto_nomes.append(projeto_atual_nome)
 
@@ -3953,7 +3953,7 @@ class MeuOrganizador:
 
         tk.Label(
             interno,
-            text="Os projetos desta lista são administrados no menu Projetos.",
+            text="Projects in this list are managed from the Projects menu.",
             bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 8)
         ).pack(anchor="w", pady=(3, 0))
 
@@ -3972,7 +3972,7 @@ class MeuOrganizador:
         prioridade_combo.pack(fill="x")
         prioridade_combo.set("Normal")
 
-        tk.Label(interno, text="Descrição", bg=WHITE, fg=TEXT,
+        tk.Label(interno, text="Description", bg=WHITE, fg=TEXT,
                  font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(12, 4))
         descricao = tk.Text(
             interno, height=7, font=("Segoe UI", 10),
@@ -4011,7 +4011,7 @@ class MeuOrganizador:
             desc = descricao.get("1.0", "end-1c")
 
             if not titulo:
-                messagebox.showwarning("Tarefa", "Digite o título da tarefa.", parent=janela)
+                messagebox.showwarning("Tarefa", "Enter the task title.", parent=janela)
                 return
 
             try:
@@ -4043,7 +4043,7 @@ class MeuOrganizador:
         if tarefa:
             tk.Button(
                 interno,
-                text="💬 Conversa / Alterações e scanners",
+                text="💬 Discussion / Changes and scans",
                 bg="#EEF2FF", fg=BLUE_DARK,
                 activebackground=BLUE_LIGHT, relief="flat", bd=0,
                 cursor="hand2", font=("Segoe UI Semibold", 9),
@@ -4143,7 +4143,7 @@ class MeuOrganizador:
 
         self.titulo_pagina(
             "Antigas",
-            "Registro das tarefas que já foram concluídas."
+            "Record of tasks that have already been completed."
         )
 
         self.criar_seletor_trabalhador(
@@ -4224,7 +4224,7 @@ class MeuOrganizador:
 
         tabela.heading(
             "descricao",
-            text="Descrição"
+            text="Description"
         )
 
         tabela.column(
@@ -4348,7 +4348,7 @@ class MeuOrganizador:
         )
 
     # ========================================================
-    # CALENDÁRIO
+    # CALENDAR
     # ========================================================
 
 
@@ -4362,9 +4362,9 @@ class MeuOrganizador:
         login_atual = self.usuario["login"].lower()
 
         self.titulo_pagina(
-            "Calendário da equipe" if visao_equipe else "Calendário",
+            "Team calendar" if visao_equipe else "Calendar",
             (
-                "Planejamento, férias e presença em uma visão rápida."
+                "Planning, vacation and presence at a glance."
                 if visao_equipe
                 else "Seu planejamento e a disponibilidade da equipe."
             )
@@ -4376,7 +4376,7 @@ class MeuOrganizador:
         cab = tk.Frame(area, bg=WHITE, highlightbackground=BORDER, highlightthickness=1)
         cab.pack(fill="x")
         nomes_meses = [
-            "", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "", "Janeiro", "Fevereiro", "March", "Abril", "Maio", "Junho",
             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
         ]
 
@@ -4400,18 +4400,18 @@ class MeuOrganizador:
             command=self.proximo_mes
         ).pack(side="right", padx=15, pady=8)
 
-        # Trabalhadores podem registrar férias; Feierabend somente nos blocos de presença.
-        # Marion também está no bloco 2 e pode registrar o próprio Feierabend.
+        # Workers can log vacation; early leave only within the presence groups.
+        # Priya is also in group 2 and can log her own early leave.
         pode_criar = perfil == "worker" or login_atual in PRESENCA_SETOR_LOGINS
         if pode_criar:
             tk.Button(
-                area, text="+ Adicionar ao calendário",
+                area, text="+ Add to calendar",
                 bg=BLUE, fg=WHITE, relief="flat", bd=0,
                 cursor="hand2", font=("Segoe UI Semibold", 9),
                 command=self.abrir_editor_evento_calendario
             ).pack(anchor="e", pady=(10, 8), ipadx=10, ipady=5)
 
-        # Carrega eventos do mês uma vez para criar indicadores discretos nos dias.
+        # Loads the month's events once to create discreet indicators on the days.
         primeiro = date(self.calendario_ano, self.calendario_mes, 1)
         if self.calendario_mes == 12:
             proximo = date(self.calendario_ano + 1, 1, 1)
@@ -4422,13 +4422,13 @@ class MeuOrganizador:
         eventos_mes_todos = buscar_eventos_periodo(primeiro.isoformat(), ultimo.isoformat(), None)
 
         def evento_visivel(e):
-            # Férias (planejadas ou aprovadas) são visíveis para toda a equipe,
-            # pois impactam o planejamento geral do escritório.
+            # Vacation (planned or approved) is visible to the whole team,
+            # since it impacts the office's overall planning.
             if e["tipo"] in ("ferias_planejadas", "ferias"):
                 return True
 
-            # Feierabend é operacional por bloco. Chefia/planejamento/gestão vê tudo;
-            # trabalhadores veem somente o próprio bloco.
+            # Early leave is operational per group. Leadership/planning/management sees everything;
+            # workers only see their own group.
             if visao_equipe:
                 return True
             if e["tipo"] == "feierabend":
@@ -4447,7 +4447,7 @@ class MeuOrganizador:
         for c in range(7):
             calendario_frame.grid_columnconfigure(c, weight=1, uniform="dia")
 
-        dias_semana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+        dias_semana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sat", "Dom"]
         for c, nome in enumerate(dias_semana):
             tk.Label(
                 calendario_frame, text=nome, bg="#EDF2F7", fg=TEXT,
@@ -4469,8 +4469,8 @@ class MeuOrganizador:
             data_sel = date(self.calendario_ano, self.calendario_mes, dia)
             data_str = data_sel.isoformat()
             nomes_dias = [
-                "Segunda-feira", "Terça-feira", "Quarta-feira",
-                "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"
+                "Segunda-feira", "Tuesday", "Quarta-feira",
+                "Quinta-feira", "Sexta-feira", "Satado", "Domingo"
             ]
 
             tk.Label(
@@ -4520,17 +4520,17 @@ class MeuOrganizador:
                 ).pack(anchor="w", pady=4)
 
             tk.Label(
-                detalhe_interno, text="Férias e presença",
+                detalhe_interno, text="Vacation and presence",
                 bg=WHITE, fg=TEXT, font=("Segoe UI", 11, "bold")
             ).pack(anchor="w", pady=(14, 5))
 
             if eventos:
                 for e in eventos:
                     if e["tipo"] == "ferias":
-                        titulo = "Férias aprovadas"
+                        titulo = "Approved vacation"
                         cor, fundo = GREEN, GREEN_LIGHT
                     elif e["tipo"] == "ferias_planejadas":
-                        titulo = "Férias planejadas"
+                        titulo = "Planned vacation"
                         cor, fundo = ORANGE, YELLOW_LIGHT
                     else:
                         titulo = f"Feierabend {e['hora']}" if e["hora"] else "Feierabend"
@@ -4571,8 +4571,8 @@ class MeuOrganizador:
                     bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 9)
                 ).pack(anchor="w", pady=4)
 
-        # Índice de indicadores por dia. Não colocamos textos dentro das células:
-        # apenas pequenos pontos, preservando o calendário limpo.
+        # Index of indicators per day. We don't put text inside the cells:
+        # just small dots, keeping the calendar clean.
         indicadores = {}
         for e in eventos_mes:
             inicio = max(date.fromisoformat(e["data_inicio"]), primeiro)
@@ -4585,9 +4585,9 @@ class MeuOrganizador:
         matriz = calendar.monthcalendar(self.calendario_ano, self.calendario_mes)
         hoje = date.today()
 
-        # Células do calendário: número em uma área própria + indicadores em uma faixa
-        # separada. Evitamos usar place() sobre o botão, porque isso fazia os pontos
-        # sobreporem os números e "vazarem" para outras semanas em algumas resoluções.
+        # Calendar cells: number in its own area + indicators in a
+        # separate strip. We avoid using place() over the button, because it made the dots
+        # overlap the numbers and "leak" into other weeks at some resolutions.
         for r, semana in enumerate(matriz, start=1):
             calendario_frame.grid_rowconfigure(r, minsize=58, weight=1, uniform="semana")
 
@@ -4631,8 +4631,8 @@ class MeuOrganizador:
                 )
                 botao.grid(row=0, column=0, sticky="nsew")
 
-                # Indicadores discretos ficam numa faixa reservada no rodapé da célula.
-                # Assim o calendário continua limpo e os marcadores nunca cobrem o dia.
+                # Discreet indicators sit in a reserved strip at the bottom of the cell.
+                # This way the calendar stays clean and the markers never cover the day.
                 tipos = indicadores.get(dia, set())
                 marcadores = tk.Frame(cel, bg=fundo_normal, height=8)
                 marcadores.grid(row=1, column=0, sticky="ew")
@@ -4664,22 +4664,22 @@ class MeuOrganizador:
                     rodape.configure(bg=cor)
                     centro.configure(bg=cor)
 
-                # IMPORTANTE: capturamos a função desta célula nos argumentos padrão.
+                # IMPORTANT: we capture this cell's function in the default arguments.
                 # Sem isso, os callbacks do Tkinter terminavam todos apontando para a
-                # última célula criada no mês (por exemplo, o dia 31).
+                # last cell created in the month (e.g. day 31).
                 def entrar(event, aplicar=aplicar_fundo):
                     aplicar("#DCEAFF")
 
                 def sair(event, aplicar=aplicar_fundo, f=fundo_normal):
                     aplicar(f)
 
-                # Hover funciona tanto no número quanto na faixa inferior da célula.
+                # Hover works on both the number and the cell's bottom strip.
                 for widget_hover in (cel, botao, marcadores, centro_marcadores):
                     widget_hover.bind("<Enter>", entrar)
                     widget_hover.bind("<Leave>", sair)
 
-                # A faixa inferior também seleciona o dia, evitando uma pequena área
-                # "morta" abaixo do número.
+                # The bottom strip also selects the day, avoiding a small
+                # "dead" area below the number.
                 marcadores.bind("<Button-1>", lambda event, d=dia: renderizar_dia(d))
                 centro_marcadores.bind("<Button-1>", lambda event, d=dia: renderizar_dia(d))
                 for barra in barras:
@@ -4699,18 +4699,18 @@ class MeuOrganizador:
         try:
             aprovar_ferias(evento_id, self.usuario["id"])
         except (ValueError, PermissionError) as erro:
-            messagebox.showwarning("Férias", str(erro))
+            messagebox.showwarning("Vacation", str(erro))
             return
         self.mostrar_calendario()
 
 
     def excluir_evento_tela(self, evento_id):
-        if not messagebox.askyesno("Calendário", "Excluir este registro do calendário?"):
+        if not messagebox.askyesno("Calendar", "Delete this calendar entry?"):
             return
         try:
             excluir_evento_calendario(evento_id, self.usuario["id"])
         except PermissionError as erro:
-            messagebox.showwarning("Calendário", str(erro))
+            messagebox.showwarning("Calendar", str(erro))
             return
         self.mostrar_calendario()
 
@@ -4723,7 +4723,7 @@ class MeuOrganizador:
             return
 
         janela = tk.Toplevel(self.root)
-        janela.title("Adicionar ao calendário")
+        janela.title("Add to calendar")
         janela.geometry("540x520")
         janela.minsize(470, 460)
         janela.configure(bg=WHITE)
@@ -4734,11 +4734,11 @@ class MeuOrganizador:
         frame.pack(fill="both", expand=True, padx=25, pady=22)
 
         tk.Label(
-            frame, text="Adicionar ao calendário",
+            frame, text="Add to calendar",
             bg=WHITE, fg=TEXT, font=("Segoe UI", 19, "bold")
         ).pack(anchor="w")
 
-        tipos = ["Férias planejadas", "Férias confirmadas"]
+        tipos = ["Planned vacation", "Confirmed vacation"]
         if login in PRESENCA_SETOR_LOGINS:
             tipos.append("Feierabend")
 
@@ -4759,19 +4759,19 @@ class MeuOrganizador:
         inicio.pack(fill="x", ipady=6)
         inicio.insert(0, hoje)
 
-        tk.Label(frame, text="Data final (para férias)", bg=WHITE, fg=TEXT,
+        tk.Label(frame, text="End date (for vacation)", bg=WHITE, fg=TEXT,
                  font=("Segoe UI Semibold", 9)).pack(anchor="w", pady=(12, 4))
         fim = tk.Entry(frame, font=("Segoe UI", 10), relief="solid", bd=1)
         fim.pack(fill="x", ipady=6)
         fim.insert(0, hoje)
 
-        tk.Label(frame, text="Hora de saída HH:MM (Feierabend)", bg=WHITE, fg=TEXT,
+        tk.Label(frame, text="Departure time HH:MM (early leave)", bg=WHITE, fg=TEXT,
                  font=("Segoe UI Semibold", 9)).pack(anchor="w", pady=(12, 4))
         hora = tk.Entry(frame, font=("Segoe UI", 10), relief="solid", bd=1)
         hora.pack(fill="x", ipady=6)
         hora.insert(0, "15:00")
 
-        tk.Label(frame, text="Observação (opcional)", bg=WHITE, fg=TEXT,
+        tk.Label(frame, text="Note (optional)", bg=WHITE, fg=TEXT,
                  font=("Segoe UI Semibold", 9)).pack(anchor="w", pady=(12, 4))
         obs = tk.Entry(frame, font=("Segoe UI", 10), relief="solid", bd=1)
         obs.pack(fill="x", ipady=6)
@@ -4779,8 +4779,8 @@ class MeuOrganizador:
         aviso = tk.Label(
             frame,
             text=(
-                "Férias planejadas aparecem em amarelo. Quando Marion aprovar, "
-                "o período passa a aparecer em verde."
+                "Planned vacation shows in yellow. Once Priya approves it, "
+                "the period will show in green."
             ),
             bg=WHITE, fg=TEXT_LIGHT, font=("Segoe UI", 8),
             justify="left", wraplength=460
@@ -4789,8 +4789,8 @@ class MeuOrganizador:
 
         def salvar():
             mapa = {
-                "Férias planejadas": "ferias_planejadas",
-                "Férias confirmadas": "ferias",
+                "Planned vacation": "ferias_planejadas",
+                "Confirmed vacation": "ferias",
                 "Feierabend": "feierabend"
             }
             tipo = mapa[tipo_combo.get()]
@@ -4802,13 +4802,13 @@ class MeuOrganizador:
                 df_date = datetime.strptime(df, "%Y-%m-%d").date()
             except ValueError:
                 messagebox.showwarning(
-                    "Calendário", "Use datas no formato AAAA-MM-DD.", parent=janela
+                    "Calendar", "Use datas no formato AAAA-MM-DD.", parent=janela
                 )
                 return
 
             if df_date < di_date:
                 messagebox.showwarning(
-                    "Calendário", "A data final não pode ser anterior à inicial.", parent=janela
+                    "Calendar", "The end date cannot be before the start date.", parent=janela
                 )
                 return
 
@@ -4824,7 +4824,7 @@ class MeuOrganizador:
                         self.usuario["id"], tipo, di, df, "", obs.get().strip()
                     )
             except ValueError as erro:
-                messagebox.showwarning("Regra de presença", str(erro), parent=janela)
+                messagebox.showwarning("Presence rule", str(erro), parent=janela)
                 return
 
             janela.destroy()
@@ -4872,7 +4872,7 @@ class MeuOrganizador:
 
         self.titulo_pagina(
             "Projetos",
-            "Cadastro central das obras em planejamento e produção de projetos."
+            "Central registry of job sites in planning and production."
         )
 
         area = tk.Frame(self.conteudo, bg=BG)
@@ -4925,7 +4925,7 @@ class MeuOrganizador:
                 self.criar_mensagem_vazia(
                     lista,
                     "Nenhum projeto neste status.",
-                    "Os projetos cadastrados aparecerão aqui."
+                    "Registered projects will appear here."
                 )
                 return
 
@@ -4991,9 +4991,9 @@ class MeuOrganizador:
 
         stats = estatisticas_projeto(projeto["id"])
         resumo = (
-            f"{stats['abertas']} tarefas abertas  •  "
-            f"{stats['concluidas']} concluídas  •  "
-            f"{stats['solicitacoes']} envios para conferência"
+            f"{stats['abertas']} open tasks  •  "
+            f"{stats['concluidas']} completed  •  "
+            f"{stats['solicitacoes']} submissions for review"
         )
         if stats["pendentes"]:
             resumo += f"  •  {stats['pendentes']} pendente(s)"
@@ -5031,7 +5031,7 @@ class MeuOrganizador:
         if self.usuario["perfil"] not in ("planner", "lead"):
             messagebox.showwarning(
                 "Projetos",
-                "Seu perfil pode consultar projetos, mas não alterar o cadastro."
+                "Your role can view projects, but cannot edit the registry."
             )
             return
 
@@ -5091,7 +5091,7 @@ class MeuOrganizador:
         b2 = tk.Frame(linha, bg=WHITE)
         b2.pack(side="left", fill="x", expand=True, padx=(6, 0))
 
-        tk.Label(b1, text="Código / número", bg=WHITE, fg=TEXT,
+        tk.Label(b1, text="Code / number", bg=WHITE, fg=TEXT,
                  font=("Segoe UI Semibold", 9)).pack(anchor="w", pady=(13, 4))
         codigo = tk.Entry(b1, font=("Segoe UI", 10), relief="solid", bd=1)
         codigo.pack(fill="x", ipady=7)
@@ -5101,7 +5101,7 @@ class MeuOrganizador:
         cliente = tk.Entry(b2, font=("Segoe UI", 10), relief="solid", bd=1)
         cliente.pack(fill="x", ipady=7)
 
-        campo_rotulo("Endereço / obra")
+        campo_rotulo("Address / site")
         endereco = tk.Entry(interno, font=("Segoe UI", 10), relief="solid", bd=1)
         endereco.pack(fill="x", ipady=7)
 
@@ -5118,7 +5118,7 @@ class MeuOrganizador:
         status.set("Ativo")
         status.pack(fill="x")
 
-        campo_rotulo("Descrição / observações")
+        campo_rotulo("Description / notes")
         descricao = tk.Text(
             interno, height=7, font=("Segoe UI", 10),
             relief="solid", bd=1, wrap="word", padx=8, pady=7
@@ -5181,7 +5181,7 @@ class MeuOrganizador:
 
         self.titulo_pagina(
             "Planos a conferir",
-            "Envios privados por grupo. Você só vê os planos relacionados ao seu setor."
+            "Private submissions per group. You only see plans related to your team."
         )
 
         area = tk.Frame(self.conteudo, bg=BG)
@@ -5201,11 +5201,11 @@ class MeuOrganizador:
         if login == "dana":
             texto_grupo = "Conferidor geral · acesso aos dois grupos"
         elif grupo == "grupo_1":
-            texto_grupo = "Grupo: Alaa · Azat · Herbert · Bene"
+            texto_grupo = "Group: Noah · Liam · Owen · Dana"
         elif grupo == "grupo_2":
-            texto_grupo = "Grupo: Henrique · Anni · Steffen · Bilal · Marion · Bene"
+            texto_grupo = "Group: Alex · Mia · Chris · Sam · Priya · Dana"
         else:
-            texto_grupo = "Seus envios ficam privados; Bene permanece como conferidor geral."
+            texto_grupo = "Your submissions stay private; Dana remains the general reviewer."
 
         tk.Label(
             info, text=texto_grupo, bg=WHITE, fg=TEXT_LIGHT,
@@ -5214,7 +5214,7 @@ class MeuOrganizador:
 
         if login != "dana":
             tk.Button(
-                info, text="+ Enviar plano para conferência",
+                info, text="+ Submit plan for review",
                 bg=BLUE, fg=WHITE, activebackground=BLUE_DARK,
                 activeforeground=WHITE, relief="flat", bd=0,
                 cursor="hand2", font=("Segoe UI Semibold", 9),
@@ -5229,8 +5229,8 @@ class MeuOrganizador:
         if not solicitacoes:
             self.criar_mensagem_vazia(
                 lista,
-                "Nenhum plano disponível para você.",
-                "Quando alguém do seu grupo enviar um plano, ele aparecerá aqui."
+                "No plans available for you.",
+                "When someone from your group submits a plan, it will appear here."
             )
             return
 
@@ -5246,12 +5246,12 @@ class MeuOrganizador:
         if not projetos:
             messagebox.showwarning(
                 "Planos a conferir",
-                "Não há projetos ativos. O planejamento/chefia precisa cadastrar um projeto primeiro."
+                "No active projects. Planning/leadership needs to register a project first."
             )
             return
 
         janela = tk.Toplevel(self.root)
-        janela.title("Enviar plano para conferência")
+        janela.title("Submit plan for review")
         janela.geometry("620x590")
         janela.minsize(520, 500)
         janela.configure(bg=WHITE)
@@ -5262,17 +5262,17 @@ class MeuOrganizador:
         frame.pack(fill="both", expand=True, padx=28, pady=24)
 
         tk.Label(
-            frame, text="Enviar plano para conferência",
+            frame, text="Submit plan for review",
             bg=WHITE, fg=TEXT, font=("Segoe UI", 20, "bold")
         ).pack(anchor="w")
 
         grupo = grupo_conferencia(self.usuario["login"])
         if grupo == "grupo_1":
-            destino = "Visível para Alaa, Azat, Herbert e Bene."
+            destino = "Visible to Noah, Liam, Owen and Dana."
         elif grupo == "grupo_2":
-            destino = "Visível para Henrique, Anni, Steffen, Bilal, Marion e Bene."
+            destino = "Visible to Alex, Mia, Chris, Sam, Priya and Dana."
         else:
-            destino = "Visível para você e para Bene."
+            destino = "Visible to you and to Dana."
         tk.Label(
             frame, text=destino, bg=WHITE, fg=TEXT_LIGHT,
             font=("Segoe UI", 9)
@@ -5298,7 +5298,7 @@ class MeuOrganizador:
         caminho = tk.Entry(frame, font=("Segoe UI", 10), relief="solid", bd=1)
         caminho.pack(fill="x", ipady=7)
 
-        tk.Label(frame, text="Observação", bg=WHITE, fg=TEXT,
+        tk.Label(frame, text="Note", bg=WHITE, fg=TEXT,
                  font=("Segoe UI Semibold", 9)).pack(anchor="w", pady=(13, 4))
         descricao = tk.Text(
             frame, height=7, font=("Segoe UI", 10),
@@ -5319,14 +5319,14 @@ class MeuOrganizador:
                     descricao.get("1.0", "end-1c").strip()
                 )
             except (ValueError, PermissionError) as erro:
-                messagebox.showwarning("Conferência", str(erro), parent=janela)
+                messagebox.showwarning("Review", str(erro), parent=janela)
                 return
 
             janela.destroy()
             self.mostrar_conferencias()
 
         tk.Button(
-            frame, text="Enviar para conferência",
+            frame, text="Submit for review",
             bg=BLUE, fg=WHITE, activebackground=BLUE_DARK,
             activeforeground=WHITE, relief="flat", bd=0,
             cursor="hand2", font=("Segoe UI Semibold", 10),
@@ -5360,7 +5360,7 @@ class MeuOrganizador:
             )
             badge_bg, badge_fg = GREEN_LIGHT, GREEN
         else:
-            badge_texto = "● Aguardando conferência"
+            badge_texto = "● Awaiting review"
             badge_bg, badge_fg = YELLOW_LIGHT, ORANGE
 
         tk.Label(
@@ -5384,7 +5384,7 @@ class MeuOrganizador:
                 justify="left", anchor="w", wraplength=820
             ).pack(fill="x", anchor="w", pady=(7, 0))
 
-        # Status operacional é privado para edição do autor.
+        # Operational status is private for the author to edit.
         linha_status = tk.Frame(corpo, bg=WHITE)
         linha_status.pack(fill="x", pady=(9, 2))
         tk.Label(
@@ -5396,7 +5396,7 @@ class MeuOrganizador:
         if eh_autor:
             status_combo = ttk.Combobox(
                 linha_status,
-                values=["Em andamento", "Ajustar após conferência", "Concluído"],
+                values=["Em andamento", "Adjust after review", "Completed"],
                 state="readonly", width=25, style="Modern.TCombobox"
             )
             status_combo.set(solicitacao["status_operacional"])
@@ -5431,7 +5431,7 @@ class MeuOrganizador:
                 command=lambda c=caminho_abrir: self.abrir_caminho(c)
             ).pack(side="left", padx=(0, 4), ipadx=6, ipady=4)
 
-        # O autor nunca vê "Conferir". Fora do grupo, o registro nem chega à tela.
+        # The author never sees "Review". Outside the group, the record never reaches the screen.
         if (
             not eh_autor
             and solicitacao["estado"] == "aguardando"
@@ -5449,7 +5449,7 @@ class MeuOrganizador:
             ).pack(side="left", padx=3, ipadx=7, ipady=4)
 
         tk.Button(
-            botoes, text="Histórico",
+            botoes, text="History",
             bg="#F1F5F9", fg=TEXT,
             activebackground="#E2E8F0", relief="flat", bd=0,
             cursor="hand2",
@@ -5458,7 +5458,7 @@ class MeuOrganizador:
 
 
     def _metodo_legado_card_projeto(self, parent, projeto):
-        """Mantido apenas para compatibilidade interna da V6; a V7 usa solicitações."""
+        """Kept only for internal V6 compatibility; V7 uses requests."""
         return
 
 
@@ -5468,8 +5468,8 @@ class MeuOrganizador:
             solicitacao["autor_login"]
         ):
             messagebox.showwarning(
-                "Conferência",
-                "Você não está no grupo autorizado para conferir este plano."
+                "Review",
+                "You are not in the group authorized to review this plan."
             )
             return
 
@@ -5493,11 +5493,11 @@ class MeuOrganizador:
                 observacao
             )
         except (ValueError, PermissionError) as erro:
-            messagebox.showwarning("Conferência", str(erro))
+            messagebox.showwarning("Review", str(erro))
             return
 
         messagebox.showinfo(
-            "Conferência registrada",
+            "Review registrada",
             f"{solicitacao['nome_plano']} conferido por {self.usuario['nome']}."
         )
         self.mostrar_conferencias()
@@ -5507,7 +5507,7 @@ class MeuOrganizador:
         registros = buscar_historico_solicitacao(solicitacao["id"])
 
         janela = tk.Toplevel(self.root)
-        janela.title("Histórico de conferência")
+        janela.title("Review history")
         janela.geometry("700x480")
         janela.minsize(560, 380)
         janela.configure(bg=WHITE)
@@ -5543,7 +5543,7 @@ class MeuOrganizador:
 
         if not registros:
             tk.Label(
-                interno, text="Ainda não há histórico.",
+                interno, text="No history yet.",
                 bg=WHITE, fg=TEXT_LIGHT
             ).pack(anchor="w", pady=20)
             return
@@ -5561,7 +5561,7 @@ class MeuOrganizador:
             ).pack(fill="x")
 
     # ========================================================
-    # INFORMAÇÕES
+    # MESSAGES
     # ========================================================
 
     def mostrar_informacoes(self):
@@ -5588,8 +5588,8 @@ class MeuOrganizador:
     def mostrar_informacoes_recebidas(self):
 
         self.titulo_pagina(
-            "Informações adicionais",
-            "Orientações, documentos e informações enviadas para você."
+            "Additional messages",
+            "Guidance, documents and messages sent to you."
         )
 
         area = tk.Frame(
@@ -5612,8 +5612,8 @@ class MeuOrganizador:
 
             self.criar_mensagem_vazia(
                 area,
-                "Nenhuma informação nova.",
-                "Quando o planejamento ou a chefia enviar alguma informação, ela aparecerá aqui."
+                "No new messages.",
+                "When planning or leadership sends a message, it will appear here."
             )
 
             return
@@ -5820,8 +5820,8 @@ class MeuOrganizador:
     def mostrar_informacoes_envio(self):
 
         self.titulo_pagina(
-            "Informações adicionais",
-            "Envie orientações, documentos e informações para os trabalhadores."
+            "Additional messages",
+            "Send guidance, documents and messages to the workers."
         )
 
         area = tk.Frame(
@@ -5837,7 +5837,7 @@ class MeuOrganizador:
         )
 
         # ----------------------------------------------------
-        # FORMULÁRIO
+        # FORM
         # ----------------------------------------------------
 
         formulario = tk.Frame(
@@ -5864,7 +5864,7 @@ class MeuOrganizador:
 
         tk.Label(
             interno,
-            text="Enviar nova informação",
+            text="Send new message",
             bg=WHITE,
             fg=TEXT,
             font=("Segoe UI", 15, "bold")
@@ -5974,7 +5974,7 @@ class MeuOrganizador:
 
         tk.Label(
             interno,
-            text="Título",
+            text="Title",
             bg=WHITE,
             fg=TEXT,
             font=("Segoe UI Semibold", 9)
@@ -6147,7 +6147,7 @@ class MeuOrganizador:
 
             if indice < 0:
                 messagebox.showwarning(
-                    "Informação",
+                    "Message",
                     "Selecione um trabalhador."
                 )
                 return
@@ -6173,8 +6173,8 @@ class MeuOrganizador:
             if not titulo_texto:
 
                 messagebox.showwarning(
-                    "Informação",
-                    "Digite um título."
+                    "Message",
+                    "Enter a title."
                 )
 
                 return
@@ -6182,7 +6182,7 @@ class MeuOrganizador:
             if not mensagem_texto:
 
                 messagebox.showwarning(
-                    "Informação",
+                    "Message",
                     "Digite a mensagem."
                 )
 
@@ -6212,12 +6212,12 @@ class MeuOrganizador:
 
                     messagebox.showwarning(
                         "Anexo",
-                        f"Não foi possível anexar:\n{arquivo}\n\n{erro}"
+                        f"Could not attach:\n{arquivo}\n\n{erro}"
                     )
 
             messagebox.showinfo(
                 "Enviado",
-                f"Informação enviada para {trabalhador['nome']}."
+                f"Message enviada para {trabalhador['nome']}."
             )
 
             titulo.delete(
@@ -6240,7 +6240,7 @@ class MeuOrganizador:
 
         tk.Button(
             botoes,
-            text="Enviar informação",
+            text="Send message",
             bg=BLUE,
             fg=WHITE,
             activebackground=BLUE_DARK,
@@ -6257,7 +6257,7 @@ class MeuOrganizador:
         )
 
         # ----------------------------------------------------
-        # HISTÓRICO
+        # HISTORY
         # ----------------------------------------------------
 
         historico = tk.Frame(
@@ -6275,7 +6275,7 @@ class MeuOrganizador:
 
         tk.Label(
             historico,
-            text="Informações enviadas",
+            text="Sent messages",
             bg=WHITE,
             fg=TEXT,
             font=("Segoe UI", 13, "bold")
@@ -6325,7 +6325,7 @@ class MeuOrganizador:
                 linha,
                 text="✓ Visualizado"
                 if lido
-                else "● Não visualizado",
+                else "● Unread",
                 bg="#FBFCFE",
                 fg=GREEN
                 if lido
@@ -6337,7 +6337,7 @@ class MeuOrganizador:
             )
 
     # ========================================================
-    # UTILITÁRIOS
+    # UTILITIES
     # ========================================================
 
     def criar_mensagem_vazia(
@@ -6403,7 +6403,7 @@ class MeuOrganizador:
 
             messagebox.showerror(
                 "Abrir projeto",
-                f"Não foi possível abrir o local:\n\n{caminho}\n\n{erro}"
+                f"Could not open the location:\n\n{caminho}\n\n{erro}"
             )
 
     def formatar_data(
@@ -6549,7 +6549,7 @@ def main():
 
         messagebox.showerror(
             "Erro ao criar banco",
-            "Não foi possível iniciar o banco de dados:\n\n"
+            "Could not start the database:\n\n"
             + str(erro)
         )
 
