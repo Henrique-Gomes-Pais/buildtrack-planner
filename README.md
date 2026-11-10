@@ -2,7 +2,7 @@
 
 A desktop project-planning tool built with **Python + Tkinter + SQLite**, originally developed for a construction-management team and rewritten here with anonymized sample data for demonstration purposes.
 
-> This is a sanitized portfolio version of a real internal tool I built and still maintain for my employer. Company names, logos and real employee names have been replaced with fictional placeholders ("BuildTrack", sample users). The architecture, features and code are otherwise representative of the production system.
+> This is a portfolio version with fictional sample data: all names, logos and users are placeholders ("BuildTrack", sample users).
 
 ## Why I built this
 
@@ -87,4 +87,4 @@ On first run, the SQLite database, the attachments folder and the sample users l
 
 ---
 
-*Feel free to reach out if you'd like to discuss the architecture or see the full (internal) version in a call.*
+*Feel free to reach out if you'd like to discuss the architecture.*
